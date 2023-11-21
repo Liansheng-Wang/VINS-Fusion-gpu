@@ -5,12 +5,19 @@ This repository is a version of VINS-Fusion with GPU acceleration. It can run on
 ```
 ubuntu 20.04
 ROS Noetic
-OpenCV 4.2.0 (OpenCV cuda version.)
+OpenCV 4.2.0 (OpenCV cuda version. You need to compile it yourself.)
 Ceres 1.4.0
 ```
 
 ## RUN
 test on realsense d435i
+
+```
+git clone https://github.com/Liansheng-Wang/VINS-Fusion-gpu.git
+cd VINS-Fusion-gpu
+catkin_make
+```
+***
 ```
 roslaunch vins vins_rviz.launch
 rosrun vins vins_node PATH_TO_VINS-Fusion-gpu/config/euroc/realsense_d435i.yaml
