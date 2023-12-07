@@ -11,6 +11,7 @@
 
 using namespace ros;
 using namespace Eigen;
+ros::Publisher pub_msg2uav;
 ros::Publisher pub_odometry, pub_latest_odometry;
 ros::Publisher pub_path;
 ros::Publisher pub_point_cloud, pub_margin_cloud;
@@ -48,6 +49,7 @@ void registerPub(ros::NodeHandle &n)
     pub_keyframe_pose = n.advertise<nav_msgs::Odometry>("keyframe_pose", 1000);
     pub_keyframe_point = n.advertise<sensor_msgs::PointCloud>("keyframe_point", 1000);
     pub_extrinsic = n.advertise<nav_msgs::Odometry>("extrinsic", 1000);
+    pub_msg2uav = n.advertise<geometry_msgs::PoseStamped>("/mavros/vision_pose/pose", 10);
 
     cameraposevisual.setScale(0.1);
     cameraposevisual.setLineWidth(0.01);
@@ -118,22 +120,37 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
 {
     if (estimator.solver_flag == Estimator::SolverFlag::NON_LINEAR)
     {
+        geometry_msgs::PoseStamped pose_msg;
         nav_msgs::Odometry odometry;
         odometry.header = header;
+        pose_msg.header = header;
+        pose_msg.header.frame_id = "world";
         odometry.header.frame_id = "world";
-        odometry.child_frame_id = "world";
+
         Quaterniond tmp_Q;
         tmp_Q = Quaterniond(estimator.Rs[WINDOW_SIZE]);
-        odometry.pose.pose.position.x = estimator.Ps[WINDOW_SIZE].x();
-        odometry.pose.pose.position.y = estimator.Ps[WINDOW_SIZE].y();
-        odometry.pose.pose.position.z = estimator.Ps[WINDOW_SIZE].z();
-        odometry.pose.pose.orientation.x = tmp_Q.x();
-        odometry.pose.pose.orientation.y = tmp_Q.y();
-        odometry.pose.pose.orientation.z = tmp_Q.z();
-        odometry.pose.pose.orientation.w = tmp_Q.w();
-        odometry.twist.twist.linear.x = estimator.Vs[WINDOW_SIZE].x();
-        odometry.twist.twist.linear.y = estimator.Vs[WINDOW_SIZE].y();
-        odometry.twist.twist.linear.z = estimator.Vs[WINDOW_SIZE].z();
+        Eigen::Vector3d tmp_P = estimator.Ps[WINDOW_SIZE];
+        
+        static Eigen::Quaterniond _init_q = Eigen::Quaterniond(0.7071068, 0.7071068, 0, 0);
+        static Eigen::Quaterniond _camera2uav_q = Eigen::Quaterniond(0.5, 0.5, -0.5, 0.5);
+        static Eigen::Quaterniond _camera2uav_q_inverse = Eigen::Quaterniond(-0.5,  0.5, -0.5,  0.5);
+        // 计算无人机的位置.
+        pose_msg.pose.position.x =  tmp_P.y();
+        pose_msg.pose.position.y = -tmp_P.x();
+        pose_msg.pose.position.z =  tmp_P.z();
+        // 计算无人机姿态
+        Eigen::Quaterniond _quat = tmp_Q;
+        _quat = _init_q * _quat;
+        _quat.normalized();
+        Eigen::Quaterniond quat = _camera2uav_q_inverse * _quat * _camera2uav_q;
+        quat.normalized();
+        pose_msg.pose.orientation.w = quat.w();
+        pose_msg.pose.orientation.x = quat.x();
+        pose_msg.pose.orientation.y = quat.y();
+        pose_msg.pose.orientation.z = quat.z();
+        pub_msg2uav.publish(pose_msg);
+
+        odometry.pose.pose = pose_msg.pose;
         pub_odometry.publish(odometry);
 
         geometry_msgs::PoseStamped pose_stamped;
@@ -145,26 +162,26 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
         path.poses.push_back(pose_stamped);
         pub_path.publish(path);
 
-        // write result to file
-        ofstream foutC(VINS_RESULT_PATH, ios::app);
-        foutC.setf(ios::fixed, ios::floatfield);
-        foutC.precision(0);
-        foutC << header.stamp.toSec() * 1e9 << ",";
-        foutC.precision(5);
-        foutC << estimator.Ps[WINDOW_SIZE].x() << ","
-              << estimator.Ps[WINDOW_SIZE].y() << ","
-              << estimator.Ps[WINDOW_SIZE].z() << ","
-              << tmp_Q.w() << ","
-              << tmp_Q.x() << ","
-              << tmp_Q.y() << ","
-              << tmp_Q.z() << ","
-              << estimator.Vs[WINDOW_SIZE].x() << ","
-              << estimator.Vs[WINDOW_SIZE].y() << ","
-              << estimator.Vs[WINDOW_SIZE].z() << "," << endl;
-        foutC.close();
-        Eigen::Vector3d tmp_T = estimator.Ps[WINDOW_SIZE];
-        printf("time: %f, t: %f %f %f q: %f %f %f %f \n", header.stamp.toSec(), tmp_T.x(), tmp_T.y(), tmp_T.z(),
-                                                          tmp_Q.w(), tmp_Q.x(), tmp_Q.y(), tmp_Q.z());
+        // // write result to file
+        // ofstream foutC(VINS_RESULT_PATH, ios::app);
+        // foutC.setf(ios::fixed, ios::floatfield);
+        // foutC.precision(0);
+        // foutC << header.stamp.toSec() * 1e9 << ",";
+        // foutC.precision(5);
+        // foutC << estimator.Ps[WINDOW_SIZE].x() << ","
+        //       << estimator.Ps[WINDOW_SIZE].y() << ","
+        //       << estimator.Ps[WINDOW_SIZE].z() << ","
+        //       << tmp_Q.w() << ","
+        //       << tmp_Q.x() << ","
+        //       << tmp_Q.y() << ","
+        //       << tmp_Q.z() << ","
+        //       << estimator.Vs[WINDOW_SIZE].x() << ","
+        //       << estimator.Vs[WINDOW_SIZE].y() << ","
+        //       << estimator.Vs[WINDOW_SIZE].z() << "," << endl;
+        // foutC.close();
+        // Eigen::Vector3d tmp_T = estimator.Ps[WINDOW_SIZE];
+        // printf("time: %f, t: %f %f %f q: %f %f %f %f \n", header.stamp.toSec(), tmp_T.x(), tmp_T.y(), tmp_T.z(),
+        //                                                   tmp_Q.w(), tmp_Q.x(), tmp_Q.y(), tmp_Q.z());
     }
 }
 

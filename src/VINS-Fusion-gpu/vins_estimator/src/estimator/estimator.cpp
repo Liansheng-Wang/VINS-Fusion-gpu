@@ -212,11 +212,11 @@ void Estimator::processMeasurements()
             header.stamp = ros::Time(feature.first);
 
             pubOdometry(*this, header);
-            pubKeyPoses(*this, header);
-            pubCameraPose(*this, header);
-            pubPointCloud(*this, header);
-            pubKeyframe(*this);
-            pubTF(*this, header);
+            // pubKeyPoses(*this, header);
+            // pubCameraPose(*this, header);
+            // pubPointCloud(*this, header);
+            // pubKeyframe(*this);
+            // pubTF(*this, header);s
             printf("process measurement time: %f\n", t_process.toc());
         }
 
