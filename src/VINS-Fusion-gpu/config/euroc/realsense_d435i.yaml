@@ -8,7 +8,7 @@ num_of_cam: 2
 imu_topic:    "/camera/imu"
 image0_topic: "/camera/infra1/image_rect_raw"
 image1_topic: "/camera/infra2/image_rect_raw"
-output_path:  "~/output"
+output_path:  "/home/dasheng/Experiment/output"
 
 cam0_calib: "left.yaml"
 cam1_calib: "right.yaml"
@@ -24,19 +24,27 @@ body_T_cam0: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [ 1, 0, 0, -0.00552,
-           0, 1, 0, 0.0051,
-           0, 0, 1, 0.01174,
-           0, 0, 0, 1 ]
+   data:  [ 9.9994374276769293e-01, 6.5006648809534480e-03, -8.3816857399555272e-03, 7.6601270410930284e-03,
+           -6.4050515772771420e-03, 9.9991468369420022e-01, 1.1384227994027298e-02, 1.5796487436385610e-02,
+            8.4549756966093605e-03, -1.1329902419399459e-02, 9.9990006835540157e-01, 1.7074143183920285e-02,
+            0., 0., 0., 1. ]
+#    data: [ 1, 0, 0, -0.00552,
+#            0, 1, 0, 0.0051,
+#            0, 0, 1, 0.01174,
+#            0, 0, 0, 1 ]
 
 body_T_cam1: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [ 1, 0, 0, 0.0446571,
-           0, 1, 0, 0.0051,
-           0, 0, 1, 0.01174,
-           0, 0, 0, 1 ]
+   data: [ 9.9994668702489320e-01, 6.6214597964977424e-03, -7.9233438713504478e-03, 5.6663068473050096e-02,
+          -6.5323875428133470e-03, 9.9991576878679267e-01, 1.1215312947391452e-02, 1.5434824690863222e-02,
+           7.9969382222697966e-03, -1.1162956672888837e-02, 9.9990571424379227e-01, 1.7295965798907565e-02,
+           0., 0., 0., 1. ]   
+#    data: [ 1, 0, 0, 0.0446571,
+#            0, 1, 0, 0.0051,
+#            0, 0, 1, 0.01174,
+#            0, 0, 0, 1 ]
 
 #Multiple thread support
 multiple_thread: 1
@@ -69,5 +77,5 @@ td: 0.0                             # initial value of time offset. unit: s. rea
 
 #loop closure parameters
 load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'
-pose_graph_save_path: "~/output/pose_graph/" # save and load path
+pose_graph_save_path: "/home/dasheng/Experiment/output/pose_graph/" # save and load path
 save_image: 0                      # save image in pose graph for visualization prupose; you can close this function by setting 0 

@@ -1,0 +1,6 @@
+<launch>
+	<node name="vins_fusion" pkg="vins"  type="vins_node" output="screen" args="$(find vins)/../config/euroc/realsense_d435i.yaml"/>
+
+	<!-- <node name="loop_fusion" pkg="loop_fusion"  type="loop_fusion_node" args="$(find vins)/../config/realsense_d435i.yaml" output="screen"/> -->
+
+</launch> 
